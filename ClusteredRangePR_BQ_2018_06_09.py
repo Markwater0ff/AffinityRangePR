@@ -11,7 +11,7 @@ import itertools
 fig = plt.figure()
 ax = Axes3D(fig)
 
-data = pd.read_csv('./Ballots/MultiwinnerParticipation.csv')
+data = pd.read_csv('./Ballots/MWinnerPart4.csv')
 print(data.shape)
 data.head()
 
@@ -63,6 +63,7 @@ while error != 0:
     # Finding the new centroids by taking the average value
     for i in range(k):
         points = [X[j] for j in range(len(X)) if clusters[j] == i]
+        print(points)
         C[i] = np.mean(points, axis=0)
     error = dist(C, C_old, None)
 

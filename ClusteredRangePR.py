@@ -20,36 +20,21 @@ data.head()
 
 #print(X)
 
-'''
-class ballot_groups:
-    vote_array = np.zeros(1,)
-    def __init__(self, data):
-        vote_array = np.array(list(zip(vote_array, data[i].values)), dtype=np.int8)
-            print(ballots.vote_array())
-
-    
-    def mult_ballots(l, weights):
-        return np.concatenate([np.repeat(i[0], i[1]) for i in zip(l,weights)])
-'''    
- #   def add_candidate_votes(self, list, weights):
+#   def add_candidate_votes(self, list, weights):
 #        vote_array = np.array(list(zip(f1, f2, f3)), dtype=np.int8)
 
 #ballots = ballot_groups(data)
 
+def mult_ballots(l, weights):
+    return np.concatenate([np.repeat(i[0], i[1]) for i in zip(l,weights)])
 
-vote_array = np.zeros(1,)
-
-fs = (list(zip(data.iloc[:, 2].values, data.iloc[:, 3].values)))
-
+wb1 = mult_ballots(data.iloc[:, 2].values, data["Weight"].values)
+wb2 = mult_ballots(data.iloc[:, 3].values, data["Weight"].values)
+fs = list(zip(wb1, wb2))
 for index in range(4, len(data.columns)):
-    print(data.iloc[:, index].values)
-    print(*fs)
-    fs = [x + (y,) for x, y in zip(fs, data.iloc[:, index].values)]
-    #fs = list(zip(*(zip(*fs + [data.iloc[:, index].values]))))
-
-print(fs)
-
- #   ballots.votes = mult_ballots(data[i].values,data['Weight'].values)
+    wb = mult_ballots(data.iloc[:, index].values, data["Weight"].values)
+    fs = [x + (y,) for x, y in zip(fs, wb)]
+ballots = np.array(fs, dtype=np.int8)
 
 
 '''
@@ -60,26 +45,32 @@ f3 = mult_ballots(data['Q'].values,data['Weight'].values)
 X = np.array(list(zip(f1, f2, f3)), dtype=np.int8)
 ax.scatter(f1, f2, f3)
 #plt.show()
+'''
 
 def dist(a, b, ax=1):
     return np.linalg.norm(a - b, ord=2, axis=ax)
 
 # Number of clusters
-k = 2
+seats = 2
 
 # X coordinates of random centroids
-C_z = np.random.randint(0, np.max(X), size=k)
+#C_z = np.random.randint(0, np.max(X), size=seats)
 # Y coordinates of random centroids
-C_x = np.random.randint(0, np.max(X), size=k)
+#C_x = np.random.randint(0, np.max(X), size=seats)
 
-C_q = np.random.randint(0, np.max(X), size=k)
-C = np.array(list(zip(C_z, C_x, C_q)), dtype=np.int8)
+#C_q = np.random.randint(0, np.max(X), size=seats)
+#C = np.array(list(zip(C_z, C_x, C_q)), dtype=np.int8)
 #print(C)
+
+shape = ballots.shape
+
+C = np.random.random_integers(np.min(ballots), np.max(ballots), (seats, shape[1]))
+
 
 # To store the value of centroids when it updates
 C_old = np.zeros(C.shape)
 # Cluster Lables(0, 1, 2)
-clusters = np.zeros(len(X))
+clusters = np.zeros(len(ballots))
 
 error = dist(C, C_old, None)
 
@@ -91,9 +82,7 @@ def quotas(votes, seats, type):
                 'mod': (len(votes)/seats)+((len(votes)/(seats+1))/(seats+1))}
     return qtypes[type]
 
-quota = quotas(X, k, 'hvar')
-print(quota)
-print(len(X))
+quota = quotas(ballots, seats, 'hare')
 
 #Chooses the quota Enforcement rule. 
 #Curr flips the value at the current indice, Rand just flips a random one.
@@ -105,22 +94,24 @@ def quotaEnforcement(clusters, cluster, index, ruletype):
 
 # Loop will run till the error becomes zero
 while error != 0:
-    print(error)
+    print("Error: ", error)
     # Assigning each value to its closest cluster
-    for i in range(len(X)):
-        distances = dist(X[i], C)
+    for i in range(len(ballots)):
+        distances = dist(ballots[i], C)
         cluster = np.argmin(distances)
-        clusters[i] = cluster
         n = []
-        if(len([n for n in range(len(clusters)) if clusters[n] == cluster]) > quota):
-            expellee = quotaEnforcement(clusters, cluster, i, "curr")
-            clusters[expellee] = 1 - clusters[expellee]
+        #if(len([n for n in range(len(clusters)) if clusters[n] == cluster]) > quota):
+            #expellee = quotaEnforcement(clusters, cluster, i, "curr")
+            #clusters[expellee] = 1 - clusters[expellee]
+        #   cluster = 1-cluster
+        clusters[i] = cluster
     # Storing the old centroid values
     C_old = deepcopy(C)
     # Finding the new centroids by taking the average value
-    for i in range(k):
-        points = [X[j] for j in range(len(X)) if clusters[j] == i]
-        C[i] = np.mean(points, axis=0)
+    for i in range(seats):
+        points = [ballots[j] for j in range(len(ballots)) if clusters[j] == i]
+        if(len(points) != 0):
+            C[i] = np.mean(points, axis=0)
     error = dist(C, C_old, None)
 
 #colors = ['r', 'g', 'b', 'y', 'c', 'm']
@@ -137,13 +128,12 @@ while error != 0:
 
 
 #calculate winners
-for i in range(k):
-  points = [X[j] for j in range(len(X)) if clusters[j] == i]
+for i in range(seats):
+  points = [ballots[j] for j in range(len(ballots)) if clusters[j] == i]
   ranges = np.mean(points, axis=0)
-  print("Z: ", ranges[0], " X: ", ranges[1], " Q:", ranges[2])
-  print(len(points))
+  for index in range(2, len(data.columns)):
+    print(data.iloc[:, index].name, ": ", ranges[index-2])
+  print("Group members:", len(points))
 
 #print(points)
 #print(X)
-
-'''
