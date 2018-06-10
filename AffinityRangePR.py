@@ -11,7 +11,7 @@ import sys
 # Turns quota enofrcement on and off
 QuotaEnforcement = 0
 # Number of clusters
-seats = 3
+seats = 2
 #These settings should eventually be moved to command line arguments
 data = pd.read_csv('./Ballots/' + sys.argv[1])
 data.head()
