@@ -6,7 +6,7 @@ This is a Python implementation, and proof of concept, for my idea for using dat
 
 ## HOW TO USE
 
-Currently there are two required paramaters, and one optional.
+Currently there are two required parameters, and one optional.
 
 Python AffinityRangePR.py [Ballots_file] [Seats] [-a]
 
