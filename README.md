@@ -18,6 +18,8 @@ Python AffinityRangePR.py [Ballots_file] [Seats] [-a]
 
 ## ELECTION FILE FORMAT
 
+Always a csv, can simply be produced inside the spreadsheet app of your choosing.
+
 1. All columns besides the first two should simply be named after a candidate/option, and contain that ballots score for said candidate.
 
 2. The first column in this file should be named "Ballot ID", and contain some kind of identifying value, like a name or a code. Mainly used while printing out affinities, if you don't care about that it can be filled with gibberish or even left blank. The core election code processes are based on index, rather than this value.
