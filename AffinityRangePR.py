@@ -12,24 +12,22 @@ import pandas as pd
 import math
 from sklearn import preprocessing 
 import argparse
+from collections import defaultdict
 
 parser = argparse.ArgumentParser(description='Run proportional election using range ballots and K-means grouping.')
 parser.add_argument('Ballots', help='Name of ballots file which contains election data, place in the ballots folder. Must be csv format.')
 parser.add_argument('Seats', help='Number of seats to run the election for.', type=int)
 parser.add_argument('-a', action='store_true', help='Print affinities between each voter (optional)')
 
-args = vars(parser.parse_args())
-ballots_file = args['Ballots']
-seats = args['Seats']
+args             = vars(parser.parse_args())
+ballots_file     = args['Ballots']
+seats            = args['Seats']
 print_affinities = args['a']
 
+def mult_ballots(l, weights):
+    return np.concatenate([np.repeat(i[0], i[1]) for i in zip(l,weights)])  #Multiplies a ballot by the value of the weight property; useful for quickly creating test elections
 
 pdata = pd.read_csv('./Ballots/' + ballots_file)
-pdata.head()
-
-def mult_ballots(l, weights):
-    return np.concatenate([np.repeat(i[0], i[1]) for i in zip(l,weights)])
-
 wb1 = mult_ballots(pdata.iloc[:, 2].values, pdata["Weight"].values)
 wb2 = mult_ballots(pdata.iloc[:, 3].values, pdata["Weight"].values)
 fs = list(zip(wb1, wb2))
@@ -50,11 +48,7 @@ def cluster_size(seats, labels, k):
 def largest_cluster(seats, labels):
   return max(cluster_sizes(seats, labels))
 
-def quotas(votes, seats, type):
-    qtypes = { 'hare': math.ceil(len(votes)/seats), 'hvar': (len(votes)/seats), 'droop': (((len(votes)/(seats+1))+1)*2), 'hb': (len(votes)/(seats+1)*2), 'mod': (len(votes)/seats)+((len(votes)/(seats+1))/(seats+1))} 
-    return qtypes[type]
-
-def above_quota_clusters(seats, labels,quota):
+def above_quota_clusters(seats,labels,quota):
   sizes = cluster_sizes(seats, labels)
   return [ind for ind, i in enumerate(sizes) if i > quota]
 
@@ -69,29 +63,28 @@ def points_label_indxs(distances, cent_indx):
       dist_points.append(pointm[np.argmin(pointm)]-point[cent_indx])
   return dist_indxs,dist_points
 
-quota = quotas(ballots, seats, 'hare')
-
 kmeans = KMeans(n_clusters=seats, algorithm="full", n_init=100, tol=0)  
 kmeans.fit(ballots)
-
 centroids = kmeans.cluster_centers_    
-labels = kmeans.labels_
+labels    = kmeans.labels_
 distances = kmeans.transform(ballots)
 
-for cent_indx in above_quota_clusters(seats, labels,quota):
+votes = len(ballots)
+quota = votes/seats
+
+for cent_indx in above_quota_clusters(seats,labels,quota):
   while cluster_size(seats, labels, cent_indx) > quota:
-    winner = np.argmax(centroids[cent_indx])
+    winner                  = np.argmax(centroids[cent_indx])
     dist_indxs, dist_points = points_label_indxs(distances, cent_indx)
-    leastd_ncluster = np.argmin(dist_points)
-    curr_distances = np.ma.array(list(distances[dist_indxs[leastd_ncluster]]), mask=False)
-    for i in above_quota_clusters(seats, labels,quota-1):
+    leastd_ncluster         = np.argmin(dist_points)
+    curr_distances          = np.ma.array(list(distances[dist_indxs[leastd_ncluster]]), mask=False)
+    for i in above_quota_clusters(seats,labels,quota-1):
       curr_distances.mask[i] = True
-    next_closest_cluster_label = np.argmin(curr_distances)
+    next_closest_cluster_label            = np.argmin(curr_distances)
     labels[[dist_indxs[leastd_ncluster]]] = next_closest_cluster_label
     
-
 for i in range(seats):
-  points = [ballots[j] for j in range(len(ballots)) if labels[j] == i]
+  points       = [ballots[j] for j in range(votes) if labels[j] == i]
   centroids[i] = np.mean(points, axis=0)
 
 def ensure_most_preferred(group, winner, centroids):
@@ -100,7 +93,6 @@ def ensure_most_preferred(group, winner, centroids):
       winner = np.argsort(group, axis=0)[-2]
   return winner
     
-  
 for ind, group in enumerate(centroids):
   winner = ensure_most_preferred(group, np.argmax(group), centroids)
   print("Winner ", ind + 1, " is ", pdata.iloc[:, winner+2].name)
@@ -117,7 +109,7 @@ def dist(a, b):
 if(print_affinities == 1):
   print("Affinities: ")
   user_diffs = []
-  users = pdata['Ballot ID'].values
+  users      = pdata['Ballot ID'].values
   for i, main_user in enumerate(ballots):
     print(users[i], " - ", end="\t")
     for n, comp_user in enumerate(ballots):
