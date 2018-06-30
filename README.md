@@ -18,11 +18,11 @@ Python AffinityRangePR.py [Ballots_file] [Seats] [-a]
 
 ## ELECTION FILE FORMAT
 
-All columns besides the first two should simply be named after a candidate/option, and contain that ballots score for said candidate.
+1. All columns besides the first two should simply be named after a candidate/option, and contain that ballots score for said candidate.
 
-The first column in this file should be named "Ballot ID", and contain some kind of identifying value, like a name or a code. Mainly used while printing out affinities, if you don't care about that it can be filled with gibberish or even left blank. The core election code processes are based on index, rather than this value.
+2. The first column in this file should be named "Ballot ID", and contain some kind of identifying value, like a name or a code. Mainly used while printing out affinities, if you don't care about that it can be filled with gibberish or even left blank. The core election code processes are based on index, rather than this value.
 
-The second column should be named "Weight". If this value is greater than 1, it duplicates that ballot N times. Mainly used to quickly produce theoretical test elections.
+3. The second column should be named "Weight". If this value is greater than 1, it duplicates that ballot N times. Mainly used to quickly produce theoretical test elections.
 
 ## MISC
 
